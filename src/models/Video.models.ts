@@ -12,7 +12,6 @@ export interface IVideo {
     videoUrl: string,
     thumbnailUrl: string,
     controls?: boolean,
-    userId: mongoose.Types.ObjectId | undefined,
     transformation?:{
         height: number,
         width:number,
@@ -42,10 +41,6 @@ const videoSchema = new mongoose.Schema<IVideo>({
     controls: {
         type: Boolean,
         default: true,
-    },
-    userId: {
-        type: mongoose.Types.ObjectId,
-        ref: "User",
     },
     transformation: {
         height: {
