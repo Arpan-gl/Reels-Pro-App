@@ -1,66 +1,66 @@
-import {NextAuthOptions} from "next-auth";
+import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { dbConnection } from "./db.config";
 import User from "@/models/User.models";
 import bcrypt from "bcryptjs";
 
-export const authOptions : NextAuthOptions = {
-    providers : [
+export const authOptions = NextAuth({
+    providers: [
         CredentialsProvider({
-            name:"Credentials",
-            credentials:{
-                email : {label:"Email",type:"text"},
-                password: {label:"Password",type:"password"},
+            name: "Credentials",
+            credentials: {
+                email: { label: "Email", type: "text" },
+                password: { label: "Password", type: "password" },
             },
-            async authorize(credentials) {
-                if(!credentials?.email || !credentials?.password){
+            async authorize(credentials: { email: string; password: string }) {
+                if (!credentials?.email || !credentials?.password) {
                     throw new Error("All fields are required");
                 }
 
                 try {
                     await dbConnection();
-                    const user = await User.findOne({email: credentials.email});
-                    if(!user){
+                    const user = await User.findOne({ email: credentials.email });
+                    if (!user) {
                         throw new Error("User not found");
                     }
                     const isMatch = await bcrypt.compare(
-                        credentials.password as string, 
+                        credentials.password,
                         user.password
                     );
-                    if(!isMatch){
+                    if (!isMatch) {
                         throw new Error("Invalid Password");
                     }
                     return {
-                        id:user._id.toString(),
-                        email:user.email,
-                    }
-                } catch (error:any) {
+                        id: user._id.toString(),
+                        email: user.email,
+                    };
+                } catch (error: any) {
                     throw new Error(error.message);
                 }
-            }
-        })
+            },
+        }),
     ],
-    callbacks:{
-        async jwt({token,user}:any){
-            if(user){
+    callbacks: {
+        async jwt({ token, user }: any) {
+            if (user) {
                 token.id = user.id;
             }
             return token;
         },
-        async session({session,token}:any){
-            if(session.user){
+        async session({ session, token }: any) {
+            if (session.user) {
                 session.user.id = token.id as string;
             }
             return session;
-        }
+        },
     },
-    pages:{
-        signIn:"/login",
-        error:"/login"
+    pages: {
+        signIn: "/login",
+        error: "/login",
     },
-    session:{
-        strategy:"jwt",
-        maxAge:30 * 24 * 60 * 60
+    session: {
+        strategy: "jwt",
+        maxAge: 30 * 24 * 60 * 60,
     },
-    secret:process.env.NEXTAUTH_SECRET,
-}
+    secret: process.env.NEXTAUTH_SECRET,
+});
