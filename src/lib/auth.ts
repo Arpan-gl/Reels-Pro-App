@@ -1,22 +1,25 @@
 import NextAuth from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
+import Credentials from "next-auth/providers/credentials";
 import { dbConnection } from "./db.config";
 import User from "@/models/User.models";
 import bcrypt from "bcryptjs";
 
 export const authOptions = NextAuth({
     providers: [
-        CredentialsProvider({
+        Credentials({
             name: "Credentials",
             credentials: {
                 email: { label: "Email", type: "text" },
                 password: { label: "Password", type: "password" },
             },
-            async authorize(credentials: { email: string; password: string }) {
-                if (!credentials?.email || !credentials?.password) {
+            authorize : async (credentials: Partial<Record<"email" | "password", unknown>>) => {
+                const email = credentials?.email as string | undefined;
+                const password = credentials?.password as string | undefined;
+
+                if (!email || !password) {
                     throw new Error("All fields are required");
                 }
-
+                    const user = await User.findOne({ email });
                 try {
                     await dbConnection();
                     const user = await User.findOne({ email: credentials.email });
@@ -24,7 +27,7 @@ export const authOptions = NextAuth({
                         throw new Error("User not found");
                     }
                     const isMatch = await bcrypt.compare(
-                        credentials.password,
+                        credentials.password as string,
                         user.password
                     );
                     if (!isMatch) {

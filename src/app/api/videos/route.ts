@@ -2,7 +2,6 @@ import { authOptions } from "@/lib/auth";
 import { dbConnection } from "@/lib/db.config";
 import Video, { IVideo } from "@/models/Video.models";
 import { NextRequest,NextResponse } from "next/server";
-import getServerSession from "next-auth";
 
 export async function GET(){
     try {
@@ -22,7 +21,7 @@ export async function GET(){
 
 export async function POST(req:NextRequest){
     try {
-        const sessions = getServerSession(authOptions);
+        const sessions = await authOptions();
         if(!sessions){
             return NextResponse.json({error:"Unauthenticated"},{status:401});
         }
